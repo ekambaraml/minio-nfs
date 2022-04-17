@@ -192,3 +192,35 @@ http://minio-minio.apps.aimlops.cp.fyre.ibm.com
 User/password 
 minio/minio123
 
+
+
+cat <<EOF |oc apply -f -
+apiVersion: batch/v1
+kind: Job
+metadata:
+  namespace: minio
+  name: minio-mlops-setup
+  labels:
+    component: minio
+spec:
+  template:
+    metadata:
+      name: minio-setup
+    spec:
+      restartPolicy: OnFailure
+      volumes:
+      - name: config
+        emptyDir: {}
+      containers:
+      - name: mc
+        image: minio/mc:latest
+        imagePullPolicy: IfNotPresent
+        command:
+        - /bin/sh
+        - -c
+        - "mc --config-dir=/config config host add mlops http://minio:9000 minio minio123 && mc --config-dir=/config mb -p mlops/mlops"
+        volumeMounts:
+        - name: config
+          mountPath: "/config"
+          
+EOF
